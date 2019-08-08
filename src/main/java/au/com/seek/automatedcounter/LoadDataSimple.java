@@ -27,6 +27,7 @@ public class LoadDataSimple {
 
     @Autowired
     AppConfig appConfig;
+    TrafficDataSimple globalMin = new TrafficDataSimple(0, LocalDateTime.now());
 
     public List<TrafficDataSimple> readFile(String fileName) {
         List<TrafficDataSimple> trafficDataList = new ArrayList<>();
@@ -47,7 +48,7 @@ public class LoadDataSimple {
         List<TrafficDataSimple> trafficDataList = readFile(appConfig.getInputFileName());
         preparePerDayList(trafficDataList);
         topThreeHalfHrs(trafficDataList);
-        prepareOneAndHalfHrList(trafficDataList);
+        log.info("Min in 1.5 hr period starts at {} with a count of {}", globalMin.getDateTime(), globalMin.getCount());
     }
 
     private void topThreeHalfHrs(final List<TrafficDataSimple> trafficDataList) {
@@ -60,7 +61,11 @@ public class LoadDataSimple {
     private void preparePerDayList(final List<TrafficDataSimple> trafficDataList) {
         List<TrafficDataSimple> perDayList = new ArrayList<>();
         TrafficDataSimple sameDate = null;
+        int counter = 0;
+        TrafficDataSimple[] totalCount = new TrafficDataSimple[3];
         for (TrafficDataSimple data: trafficDataList) {
+            counter++;
+            checkMinInTimePeriod(counter, totalCount, data);
             if (sameDate == null) {
                 sameDate = data;
             }
@@ -71,19 +76,22 @@ public class LoadDataSimple {
                 sameDate = null;
             }
         }
-        perDayList.stream().forEach(s -> log.info(s.getDateTime().toLocalDate() +" ==> " + s.getCount()));
+        perDayList.stream().forEach(s -> log.info("{} ==> {}" , s.getDateTime().toLocalDate(), s.getCount()));
     }
 
-    private void prepareOneAndHalfHrList(final List<TrafficDataSimple> trafficDataList) {
-        List<TrafficDataSimple> oneAndHalfHrList = new ArrayList<>();
-        TrafficDataSimple[] trafficDataArray = trafficDataList.toArray(new TrafficDataSimple[trafficDataList.size()]);
-        for (int i = 0 ; i < trafficDataArray.length -2 ; i++) {
-            if (ChronoUnit.HOURS.between(trafficDataArray[i].getDateTime(), trafficDataArray[i+2].getDateTime()) == 1) {
-                int totalCount = trafficDataArray[i].getCount()+ trafficDataArray[i+1].getCount()+ trafficDataArray[i+2].getCount();
-                oneAndHalfHrList.add(new TrafficDataSimple(totalCount, trafficDataArray[i].getDateTime()));
+    private void checkMinInTimePeriod(int counter, TrafficDataSimple[] totalCount, TrafficDataSimple data) {
+        int min;
+        totalCount[2] = totalCount[1];
+        totalCount[1] = totalCount[0];
+        totalCount[0] = data;
+        if (counter >= 3) {
+            min = totalCount[0].getCount() + totalCount[1].getCount() + totalCount[2].getCount();
+            if (counter == 3 || globalMin.getCount() > min) {
+                if (ChronoUnit.HOURS.between(totalCount[2].getDateTime(), totalCount[0].getDateTime()) == 1) {
+                    globalMin.setCount(min);
+                    globalMin.setDateTime(totalCount[2].getDateTime());
+                }
             }
         }
-        oneAndHalfHrList.sort(Comparator.comparing(TrafficDataSimple::getCount));
-        oneAndHalfHrList.stream().limit(1).forEach(s -> log.info("1.5 HOUR with least cars starts from ==> " + s.getDateTime() +" with a count of ==> " + s.getCount()));
     }
 }
