@@ -1,10 +1,9 @@
 package au.com.seek.automatedcounter;
 
+import aspect.LogExecutionTime;
 import config.AppConfig;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
@@ -22,20 +21,18 @@ import java.util.stream.Stream;
  */
 @Slf4j
 @Configuration
-@ComponentScan(basePackages = "au.com.seek.automatedcounter")
-@ComponentScan(basePackages = "config")
-public class LoadDataSimple {
+public class LoadData {
 
     @Autowired
     AppConfig appConfig;
-    TrafficDataSimple globalMin = new TrafficDataSimple(0, LocalDateTime.now());
+    TrafficData globalMin = new TrafficData(0, LocalDateTime.now());
 
-    public List<TrafficDataSimple> readFile(String fileName) {
-        List<TrafficDataSimple> trafficDataList = new ArrayList<>();
+    public List<TrafficData> readFile(String fileName) {
+        List<TrafficData> trafficDataList = new ArrayList<>();
         try (Stream<String> stream = Files.lines(Paths.get(fileName)))
         {
             stream.forEach(s -> {
-                trafficDataList.add(new TrafficDataSimple(Integer.parseInt(s.split(" ")[1]), LocalDateTime.parse(s.split(" ")[0])));
+                trafficDataList.add(new TrafficData(Integer.parseInt(s.split(" ")[1]), LocalDateTime.parse(s.split(" ")[0])));
             });
         } catch (IOException e)
         {
@@ -47,25 +44,27 @@ public class LoadDataSimple {
 
     @LogExecutionTime
     public void printStats() {
-        List<TrafficDataSimple> trafficDataList = readFile(appConfig.getInputFileName());
+        List<TrafficData> trafficDataList = readFile(appConfig.getInputFileName());
         preparePerDayList(trafficDataList);
         topThreeHalfHrs(trafficDataList);
         log.info("Min in 1.5 hr period starts at {} with a count of {}", globalMin.getDateTime(), globalMin.getCount());
     }
 
-    private void topThreeHalfHrs(final List<TrafficDataSimple> trafficDataList) {
-        List<TrafficDataSimple> topThreeList = new ArrayList<>(trafficDataList);
-        topThreeList.sort(Comparator.comparing(TrafficDataSimple::getCount).reversed());
+    @LogExecutionTime
+    public void topThreeHalfHrs(final List<TrafficData> trafficDataList) {
+        List<TrafficData> topThreeList = new ArrayList<>(trafficDataList);
+        topThreeList.sort(Comparator.comparing(TrafficData::getCount).reversed());
         log.info("TOP 3 half hours with most cars ");
         topThreeList.stream().limit(3).forEach(s -> log.info(" Date / Time {} with count {}", s.getDateTime(), s.getCount()));
     }
 
-    private void preparePerDayList(final List<TrafficDataSimple> trafficDataList) {
-        List<TrafficDataSimple> perDayList = new ArrayList<>();
-        TrafficDataSimple sameDate = null;
+    @LogExecutionTime
+    private void preparePerDayList(final List<TrafficData> trafficDataList) {
+        List<TrafficData> perDayList = new ArrayList<>();
+        TrafficData sameDate = null;
         int counter = 0;
-        TrafficDataSimple[] totalCount = new TrafficDataSimple[3];
-        for (TrafficDataSimple data: trafficDataList) {
+        TrafficData[] totalCount = new TrafficData[3];
+        for (TrafficData data: trafficDataList) {
             counter++;
             checkMinInTimePeriod(counter, totalCount, data);
             if (sameDate == null) {
@@ -81,7 +80,8 @@ public class LoadDataSimple {
         perDayList.stream().forEach(s -> log.info("{} ==> {}" , s.getDateTime().toLocalDate(), s.getCount()));
     }
 
-    private void checkMinInTimePeriod(int counter, TrafficDataSimple[] totalCount, TrafficDataSimple data) {
+    @LogExecutionTime
+    private void checkMinInTimePeriod(int counter, TrafficData[] totalCount, TrafficData data) {
         int min;
         totalCount[2] = totalCount[1];
         totalCount[1] = totalCount[0];
