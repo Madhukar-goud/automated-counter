@@ -1,6 +1,7 @@
 package au.com.seek.automatedcounter;
 
 import config.AppConfig;
+import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
@@ -44,6 +45,7 @@ public class LoadDataSimple {
         return trafficDataList;
     }
 
+    @LogExecutionTime
     public void printStats() {
         List<TrafficDataSimple> trafficDataList = readFile(appConfig.getInputFileName());
         preparePerDayList(trafficDataList);
