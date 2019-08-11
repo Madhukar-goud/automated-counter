@@ -38,7 +38,6 @@ public class LoadData {
         {
             log.error("IO Exception in readFile {} ", e);
         }
-
         return trafficDataList;
     }
 
@@ -68,9 +67,8 @@ public class LoadData {
             counter++;
             checkMinInTimePeriod(counter, totalCount, data);
             if (sameDate == null) {
-                sameDate = data;
-            }
-            if (sameDate.getDateTime().toLocalDate().equals(data.getDateTime().toLocalDate())) {
+                sameDate = new TrafficData(data.getCount(), data.getDateTime());
+            } else if (sameDate.getDateTime().toLocalDate().equals(data.getDateTime().toLocalDate())) {
                 sameDate.setCount(sameDate.getCount() + data.getCount());
             } else {
                 perDayList.add(sameDate);
