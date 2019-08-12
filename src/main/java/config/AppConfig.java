@@ -13,4 +13,8 @@ public class AppConfig {
 
     @Value("${input.file.name}")
     private String inputFileName;
+
+    @Value("${is.logmethodexecutiontime}")
+    private boolean isLogMethodExecutionTime;
+
 }
