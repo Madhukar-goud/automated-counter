@@ -29,6 +29,9 @@ public class LoadData {
 
     TrafficData globalMin = new TrafficData(0, LocalDateTime.now());
 
+    /**
+        Read the file from location specified in application.properties
+     */
     public List<TrafficData> readFile(String fileName) {
         List<TrafficData> trafficDataList = new ArrayList<>();
         try (Stream<String> stream = Files.lines(Paths.get(fileName))) {
@@ -41,6 +44,9 @@ public class LoadData {
         return trafficDataList;
     }
 
+    /**
+     Custom method to call to print all the values
+     */
     @LogExecutionTime
     public void printStats() {
         List<TrafficData> trafficDataList = readFile(appConfig.getInputFileName());
@@ -51,6 +57,9 @@ public class LoadData {
         log.info("Printing Global Min ==> {} ", globalMin.getCount());
     }
 
+    /**
+        Top 3 Half hours. Accepts the List of TrafficData
+     */
     @LogExecutionTime
     public List<TrafficData> topThreeHalfHrs(final List<TrafficData> trafficDataList) {
         List<TrafficData> topThreeList = new ArrayList<>(trafficDataList);
@@ -61,6 +70,10 @@ public class LoadData {
         return topThreeList;
     }
 
+    /**
+        Sum of per day counts. Accepts the List of TrafficData. The last record needs
+        to be added explicity
+     */
     @LogExecutionTime
     public List<TrafficData> preparePerDayList(final List<TrafficData> trafficDataList) {
         List<TrafficData> perDayList = new ArrayList<>();
@@ -86,6 +99,10 @@ public class LoadData {
         return perDayList;
     }
 
+    /**
+        Check the min in 1.5 hr time period. This can called from the preparePerDayList as well
+        to avoid looping through the list again
+     */
     @LogExecutionTime
     private void checkMinInTimePeriod(int counter, TrafficData[] totalCount, TrafficData data) {
         int min;
@@ -103,6 +120,10 @@ public class LoadData {
         }
     }
 
+    /**
+        Get the Min count in one and half hour time period. Accepts list of traffic data.
+        It loops through the read file
+     */
     @LogExecutionTime
     public Integer getMinCountOneAndHalfHr(final List<TrafficData> trafficDataList) {
         List<TrafficData> oneAndHalfHrList = new ArrayList<>();
